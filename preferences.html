@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Preferences</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 460px;
+            margin: 0 auto;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            background-color: #2d2d2d;
+            border: 1px solid #404040;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .input-group input:focus {
+            border-color: #505050;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+        .button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .save-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .save-button:hover {
+            background-color: #45a049;
+        }
+        .cancel-button {
+            background-color: #2d2d2d;
+            color: white;
+        }
+        .cancel-button:hover {
+            background-color: #363636;
+        }
+        .webcam-toggle {
+            background-color: #2196F3;
+            color: white;
+            width: 100%;
+            margin-bottom: 20px;
+            padding: 12px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .webcam-toggle.disabled {
+            background-color: #f44336;
+        }
+        .file-input-group {
+            margin-bottom: 20px;
+            background-color: #2d2d2d;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        .file-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+        .file-input {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .remove-video-button {
+            background-color: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none;
+            width: 100%;
+        }
+        .remove-video-button:hover {
+            background-color: #c82333;
+        }
+        .color-wheel {
+            width: 100%;
+            height: 40px;
+            padding: 0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .color-wheel::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        .color-wheel::-webkit-color-swatch {
+            border: none;
+            border-radius: 6px;
+        }
+        .file-label {
+            margin-left: 10px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+        .input-select {
+            width: 100%;
+            padding: 12px;
+            background-color: #2d2d2d;
+            color: #ffffff;
+            border: 1px solid #404040;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+        .input-select:focus {
+            border-color: #505050;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+        }
+        .input-select option {
+            background-color: #2d2d2d;
+            color: #ffffff;
+            padding: 8px;
+        }
+        .text-settings-section {
+            background-color: #2d2d2d;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .text-field-settings {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #363636;
+            border-radius: 6px;
+        }
+        .number-input {
+            width: 100%;
+            padding: 12px;
+            background-color: #2d2d2d;
+            border: 1px solid #404040;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 14px;
+            outline: none;
+        }
+        .number-input:focus {
+            border-color: #505050;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body>
+    <button id="webcamToggle" class="webcam-toggle">Webcam Enabled</button>
+    
+    <div class="container">
+        <div class="input-group">
+            <label for="webcamSelect">Select Camera</label>
+            <select id="webcamSelect" class="input-select">
+                <option value="">Loading cameras...</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="colorTint1">Camera Tint Color 1</label>
+            <input type="color" id="colorTint1" value="#ffffff" class="color-wheel">
+        </div>
+        
+        <div class="input-group">
+            <label for="colorTint2">Camera Tint Color 2</label>
+            <input type="color" id="colorTint2" value="#ffffff" class="color-wheel">
+        </div>
+        
+        <div class="file-input-group">
+            <label for="videoInput1">Overlay Video 1 (WebM with alpha)</label>
+            <input type="file" id="videoInput1" accept="video/webm" class="file-input">
+            <span id="overlay1Label" class="file-label"></span>
+            <button id="removeVideoButton1" class="remove-video-button">Remove Video 1</button>
+        </div>
+
+        <div class="file-input-group">
+            <label for="videoInput2">Overlay Video 2 (WebM with alpha)</label>
+            <input type="file" id="videoInput2" accept="video/webm" class="file-input">
+            <span id="overlay2Label" class="file-label"></span>
+            <button id="removeVideoButton2" class="remove-video-button">Remove Video 2</button>
+        </div>
+
+        <div class="input-group">
+            <label for="targetIp">Target Computer IP</label>
+            <input type="text" id="targetIp" placeholder="e.g., 192.168.1.100">
+        </div>
+        <div class="input-group">
+            <label for="databaseIp">Database IP</label>
+            <input type="text" id="databaseIp" placeholder="e.g., 192.168.1.200">
+        </div>
+
+        <div class="text-settings-section">
+            <h3 style="color: #ffffff; margin-bottom: 20px;">Text Overlay Settings</h3>
+            
+            <div class="input-group">
+                <label for="fontFamily">Font Family</label>
+                <select id="fontFamily" class="input-select">
+                    <option value="Arial">Arial</option>
+                    <option value="Helvetica">Helvetica</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Impact">Impact</option>
+                </select>
+            </div>
+
+            <div class="text-field-settings">
+                <h4 style="color: #ffffff; margin: 15px 0;">Text Field 1</h4>
+                <div class="input-group">
+                    <label for="text1X">X Position (%)</label>
+                    <input type="number" id="text1X" min="0" max="100" value="5" class="number-input">
+                </div>
+                <div class="input-group">
+                    <label for="text1Y">Y Position (%)</label>
+                    <input type="number" id="text1Y" min="0" max="100" value="10" class="number-input">
+                </div>
+                <div class="input-group">
+                    <label for="text1Size">Size (%)</label>
+                    <input type="number" id="text1Size" min="1" max="100" value="4" class="number-input">
+                </div>
+            </div>
+
+            <div class="text-field-settings">
+                <h4 style="color: #ffffff; margin: 15px 0;">Text Field 2</h4>
+                <div class="input-group">
+                    <label for="text2X">X Position (%)</label>
+                    <input type="number" id="text2X" min="0" max="100" value="5" class="number-input">
+                </div>
+                <div class="input-group">
+                    <label for="text2Y">Y Position (%)</label>
+                    <input type="number" id="text2Y" min="0" max="100" value="20" class="number-input">
+                </div>
+                <div class="input-group">
+                    <label for="text2Size">Size (%)</label>
+                    <input type="number" id="text2Size" min="1" max="100" value="4" class="number-input">
+                </div>
+            </div>
+
+            <div class="text-field-settings">
+                <h4 style="color: #ffffff; margin: 15px 0;">Text Field 3</h4>
+                <div class="input-group">
+                    <label for="text3X">X Position (%)</label>
+                    <input type="number" id="text3X" min="0" max="100" value="5" class="number-input">
+                </div>
+                <div class="input-group">
+                    <label for="text3Y">Y Position (%)</label>
+                    <input type="number" id="text3Y" min="0" max="100" value="30" class="number-input">
+                </div>
+                <div class="input-group">
+                    <label for="text3Size">Size (%)</label>
+                    <input type="number" id="text3Size" min="1" max="100" value="4" class="number-input">
+                </div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="button cancel-button" id="cancelButton">Cancel</button>
+            <button class="button save-button" id="saveButton">Save</button>
+        </div>
+    </div>
+
+    <script>
+        const targetIpInput = document.getElementById('targetIp');
+        const databaseIpInput = document.getElementById('databaseIp');
+        const saveButton = document.getElementById('saveButton');
+        const cancelButton = document.getElementById('cancelButton');
+        const webcamToggle = document.getElementById('webcamToggle');
+        const colorTint1 = document.getElementById('colorTint1');
+        const colorTint2 = document.getElementById('colorTint2');
+        const videoInput1 = document.getElementById('videoInput1');
+        const videoInput2 = document.getElementById('videoInput2');
+        const removeVideoButton1 = document.getElementById('removeVideoButton1');
+        const removeVideoButton2 = document.getElementById('removeVideoButton2');
+
+        let currentPreferences = {
+            isWebcamEnabled: true,
+            colorTint1: '#ffffff',
+            colorTint2: '#ffffff',
+            overlay1: '',
+            overlay2: '',
+            selectedWebcam: '',
+            fontFamily: 'Arial',
+            textFields: [
+                { x: 5, y: 10, size: 4 },
+                { x: 5, y: 20, size: 4 },
+                { x: 5, y: 30, size: 4 }
+            ]
+        };
+
+        // Function to get connected webcams
+        async function getConnectedWebcams() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                return devices.filter(device => device.kind === 'videoinput');
+            } catch (error) {
+                console.error('Error getting webcams:', error);
+                return [];
+            }
+        }
+
+        // Function to populate webcam select
+        async function populateWebcamSelect() {
+            const webcamSelect = document.getElementById('webcamSelect');
+            const webcams = await getConnectedWebcams();
+            
+            webcamSelect.innerHTML = '';
+            if (webcams.length === 0) {
+                webcamSelect.innerHTML = '<option value="">No webcams found</option>';
+                return;
+            }
+
+            webcams.forEach((webcam, index) => {
+                const option = document.createElement('option');
+                option.value = webcam.deviceId;
+                option.text = webcam.label || `Webcam ${index + 1}`;
+                webcamSelect.appendChild(option);
+            });
+
+            // Select the saved webcam if it exists
+            if (currentPreferences.selectedWebcam) {
+                webcamSelect.value = currentPreferences.selectedWebcam;
+            }
+        }
+
+        // Load preferences when window opens
+        window.electron.loadPreferences().then(prefs => {
+            if (prefs) {
+                currentPreferences = prefs;
+                // Set initial webcam toggle state
+                currentPreferences.isWebcamEnabled = prefs.isWebcamEnabled !== undefined ? prefs.isWebcamEnabled : true;
+                webcamToggle.textContent = currentPreferences.isWebcamEnabled ? 'Webcam Enabled' : 'Webcam Disabled';
+                webcamToggle.classList.toggle('disabled', !currentPreferences.isWebcamEnabled);
+                
+                // Load other preferences
+                document.getElementById('colorTint1').value = prefs.colorTint1 || '#ffffff';
+                document.getElementById('colorTint2').value = prefs.colorTint2 || '#ffffff';
+                
+                // Load text field settings
+                if (prefs.fontFamily) {
+                    document.getElementById('fontFamily').value = prefs.fontFamily;
+                }
+                if (prefs.textFields) {
+                    for (let i = 1; i <= 3; i++) {
+                        const field = prefs.textFields[i-1] || { x: 5, y: i * 10, size: 4 };
+                        document.getElementById(`text${i}X`).value = field.x;
+                        document.getElementById(`text${i}Y`).value = field.y;
+                        document.getElementById(`text${i}Size`).value = field.size;
+                    }
+                }
+                
+                // Update file input labels if paths exist
+                if (prefs.overlay1) {
+                    const fileName1 = prefs.overlay1.split('\\').pop().split('/').pop();
+                    document.getElementById('overlay1Label').textContent = fileName1;
+                }
+                if (prefs.overlay2) {
+                    const fileName2 = prefs.overlay2.split('\\').pop().split('/').pop();
+                    document.getElementById('overlay2Label').textContent = fileName2;
+                }
+
+                // Initialize webcam selection
+                navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                    .then(() => {
+                        populateWebcamSelect();
+                    })
+                    .catch(error => {
+                        console.error('Error requesting initial webcam permission:', error);
+                        const webcamSelect = document.getElementById('webcamSelect');
+                        webcamSelect.innerHTML = '<option value="">Error accessing webcams</option>';
+                    });
+            }
+        });
+
+        // Handle webcam selection change
+        document.getElementById('webcamSelect').addEventListener('change', (event) => {
+            currentPreferences.selectedWebcam = event.target.value;
+            window.electron.savePreferences(currentPreferences);
+            window.electron.updateWebcam(event.target.value);
+        });
+
+        // Handle overlay1 file selection
+        videoInput1.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const filePath = file.path;
+                currentPreferences.overlay1 = filePath;
+                document.getElementById('overlay1Label').textContent = file.name;
+                window.electron.savePreferences(currentPreferences);
+            }
+        });
+
+        // Handle overlay2 file selection
+        videoInput2.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const filePath = file.path;
+                currentPreferences.overlay2 = filePath;
+                document.getElementById('overlay2Label').textContent = file.name;
+                window.electron.savePreferences(currentPreferences);
+            }
+        });
+
+        // Handle webcam toggle
+        webcamToggle.addEventListener('click', () => {
+            currentPreferences.isWebcamEnabled = !currentPreferences.isWebcamEnabled;
+            webcamToggle.textContent = currentPreferences.isWebcamEnabled ? 'Webcam Enabled' : 'Webcam Disabled';
+            webcamToggle.classList.toggle('disabled', !currentPreferences.isWebcamEnabled);
+            window.electron.savePreferences(currentPreferences);
+            window.electron.toggleWebcam();
+        });
+
+        // Add webcam state change handler
+        if (window.electron) {
+            window.electron.onWebcamStateChange((enabled) => {
+                currentPreferences.isWebcamEnabled = enabled;
+                webcamToggle.textContent = enabled ? 'Webcam Enabled' : 'Webcam Disabled';
+                webcamToggle.classList.toggle('disabled', !enabled);
+            });
+        }
+
+        // Handle color tint changes
+        document.getElementById('colorTint1').addEventListener('input', (event) => {
+            currentPreferences.colorTint1 = event.target.value;
+            window.electron.savePreferences(currentPreferences);
+        });
+
+        document.getElementById('colorTint2').addEventListener('input', (event) => {
+            currentPreferences.colorTint2 = event.target.value;
+            window.electron.savePreferences(currentPreferences);
+        });
+
+        // Handle remove video buttons
+        removeVideoButton1.addEventListener('click', () => {
+            videoInput1.value = '';
+            removeVideoButton1.style.display = 'none';
+            currentPreferences.overlay1 = '';
+            window.electron.savePreferences(currentPreferences);
+        });
+
+        removeVideoButton2.addEventListener('click', () => {
+            videoInput2.value = '';
+            removeVideoButton2.style.display = 'none';
+            currentPreferences.overlay2 = '';
+            window.electron.savePreferences(currentPreferences);
+        });
+
+        // Add text settings change handlers
+        document.getElementById('fontFamily').addEventListener('change', (event) => {
+            currentPreferences.fontFamily = event.target.value;
+            window.electron.send('text-settings-changed', {
+                fontFamily: currentPreferences.fontFamily,
+                textFields: currentPreferences.textFields
+            });
+        });
+
+        // Add handlers for all text field inputs
+        for (let i = 1; i <= 3; i++) {
+            ['X', 'Y', 'Size'].forEach(prop => {
+                document.getElementById(`text${i}${prop}`).addEventListener('input', (event) => {
+                    if (!currentPreferences.textFields) {
+                        currentPreferences.textFields = [
+                            { x: 5, y: 10, size: 4 },
+                            { x: 5, y: 20, size: 4 },
+                            { x: 5, y: 30, size: 4 }
+                        ];
+                    }
+                    const value = parseFloat(event.target.value);
+                    const field = currentPreferences.textFields[i-1];
+                    switch(prop) {
+                        case 'X': field.x = value; break;
+                        case 'Y': field.y = value; break;
+                        case 'Size': field.size = value; break;
+                    }
+                    window.electron.send('text-settings-changed', {
+                        fontFamily: currentPreferences.fontFamily,
+                        textFields: currentPreferences.textFields
+                    });
+                });
+            });
+        }
+
+        // Save preferences
+        saveButton.addEventListener('click', async () => {
+            await window.electron.savePreferences(currentPreferences);
+            window.electron.closePreferences();
+        });
+
+        // Cancel and close window
+        cancelButton.addEventListener('click', () => {
+            window.electron.closePreferences();
+        });
+    </script>
+</body>
+</html> 

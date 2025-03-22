@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webcam Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 20px;
+        }
+        .sidebar {
+            width: 250px;
+            flex-shrink: 0;
+        }
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        #webcamSelect {
+            margin-bottom: 20px;
+            padding: 12px;
+            font-size: 16px;
+            width: 100%;
+            background-color: #2d2d2d;
+            color: #ffffff;
+            border: 1px solid #404040;
+            border-radius: 6px;
+            cursor: pointer;
+            outline: none;
+        }
+        #webcamSelect:hover {
+            background-color: #363636;
+        }
+        #webcamSelect:focus {
+            border-color: #505050;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+        }
+        #webcamSelect option {
+            background-color: #2d2d2d;
+            color: #ffffff;
+            padding: 8px;
+        }
+        #videoElement {
+            display: none;
+            z-index: 1;
+        }
+        .video-container {
+            position: relative;
+            height: calc(100vh - 120px);
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #displayCanvas {
+            height: 100%;
+            width: auto;
+            background-color: transparent;
+            position: relative;
+            z-index: 10;
+        }
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: rgba(255,107,107,0.1);
+            border-radius: 4px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            background-color: #2d2d2d;
+            border: 1px solid #404040;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 14px;
+            outline: none;
+        }
+        .input-group input:focus {
+            border-color: #505050;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+            width: 100%;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+        #recordingStatus {
+            margin-top: 10px;
+            text-align: center;
+            color: #ff6b6b;
+            font-size: 14px;
+        }
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            pointer-events: none;
+        }
+        #overlayVideo1, #overlayVideo2 {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 5;
+        }
+        .file-input-group {
+            margin-top: 20px;
+        }
+        .file-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+        #removeVideoButton {
+            background-color: #dc3545;
+            margin-top: 10px;
+            display: none;
+        }
+        #removeVideoButton:hover {
+            background-color: #c82333;
+        }
+        .color-wheel {
+            width: 100%;
+            height: 40px;
+            padding: 0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .color-wheel::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        .color-wheel::-webkit-color-swatch {
+            border: none;
+            border-radius: 6px;
+        }
+        .preferences-button {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #2d2d2d;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            z-index: 1000;
+        }
+        .preferences-button:hover {
+            background-color: #363636;
+        }
+        .input-select {
+            width: 100%;
+            padding: 12px;
+            background-color: #2d2d2d;
+            color: #ffffff;
+            border: 1px solid #404040;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+        .input-select:focus {
+            border-color: #505050;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+        }
+        .input-select option {
+            background-color: #2d2d2d;
+            color: #ffffff;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="input-group">
+                <label for="playerSelect">Player</label>
+                <select id="playerSelect" class="input-select">
+                    <option value="">Loading players...</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="field3">Field 3</label>
+                <input type="text" id="field3" name="field3">
+            </div>
+            <div class="input-group">
+                <button id="overlayToggleButton" class="button" style="background-color: #2196F3;">
+                    Overlay 1 & Tint 1 Active
+                </button>
+            </div>
+            <button id="recordButton" class="button">Record 5s</button>
+            <div id="recordingStatus"></div>
+        </div>
+        <div class="main-content">
+            <div class="video-container">
+                <video id="videoElement" autoplay playsinline></video>
+                <video id="overlayVideo1" loop muted playsinline></video>
+                <video id="overlayVideo2" loop muted playsinline></video>
+                <canvas id="displayCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+    <button id="preferencesButton" class="preferences-button">Preferences</button>
+
+    <script src="network.js"></script>
+    <script>
+        let currentStream = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let recordButton = document.getElementById('recordButton');
+        let recordingStatus = document.getElementById('recordingStatus');
+        let isRecording = false;
+        let playerSelect = document.getElementById('playerSelect');
+        let field3Input = document.getElementById('field3');
+        let overlayVideo1 = document.getElementById('overlayVideo1');
+        let overlayVideo2 = document.getElementById('overlayVideo2');
+        let overlayToggleButton = document.getElementById('overlayToggleButton');
+        let isOverlay1Active = true;
+        let preferencesButton = document.getElementById('preferencesButton');
+        let isWebcamEnabled = true;
+        let currentColorTint1 = '#ffffff';
+        let currentColorTint2 = '#ffffff';
+        let currentFontFamily = 'Arial';
+        let isInitializingWebcam = false;
+        let initWebcamTimeout = null;
+        let textFieldSettings = [
+            { x: 5, y: 10, size: 4 },
+            { x: 5, y: 20, size: 4 },
+            { x: 5, y: 30, size: 4 }
+        ];
+
+        // Set initial overlay toggle button text
+        overlayToggleButton.textContent = isOverlay1Active ? 'Overlay 1 & Tint 1 Active' : 'Overlay 2 & Tint 2 Active';
+
+        // Initialize preferences button
+        if (preferencesButton) {
+            console.log('Preferences button found, adding click handler');
+            preferencesButton.addEventListener('click', () => {
+                console.log('Preferences button clicked');
+                if (window.electron) {
+                    console.log('Electron object found, sending openPreferences event');
+                    window.electron.openPreferences();
+                } else {
+                    console.error('Electron object not found in window');
+                }
+            });
+        } else {
+            console.error('Preferences button not found in DOM');
+        }
+
+        // Add text settings change handler
+        if (window.electron) {
+            window.electron.onTextSettingsChange((settings) => {
+                console.log('Text settings changed:', settings);
+                updateTextSettings(settings);
+            });
+        }
+
+        function updateTextSettings(settings) {
+            // Update font family if provided
+            if (settings.fontFamily) {
+                currentFontFamily = settings.fontFamily;
+            }
+            
+            // Update text field positions and sizes if provided
+            if (settings.textFields) {
+                settings.textFields.forEach((field, index) => {
+                    if (index < textFieldSettings.length) {
+                        const currentSettings = textFieldSettings[index];
+                        // Create a new object to avoid reference issues
+                        textFieldSettings[index] = {
+                            x: field.x !== undefined ? field.x : currentSettings.x,
+                            y: field.y !== undefined ? field.y : currentSettings.y,
+                            size: field.size !== undefined ? field.size : currentSettings.size
+                        };
+                    }
+                });
+            }
+        }
+
+        // Add color tint change handler
+        if (window.electron) {
+            window.electron.onColorTintChange((colors) => {
+                console.log('Color tints changed:', colors);
+                if (colors.colorTint1 !== undefined) {
+                    currentColorTint1 = colors.colorTint1;
+                }
+                if (colors.colorTint2 !== undefined) {
+                    currentColorTint2 = colors.colorTint2;
+                }
+            });
+        }
+
+        // Debounced webcam initialization function
+        function debouncedInitializeWebcam() {
+            // Clear any pending initialization
+            if (initWebcamTimeout) {
+                clearTimeout(initWebcamTimeout);
+            }
+            
+            // Set a new timeout
+            initWebcamTimeout = setTimeout(() => {
+                initializeWebcam();
+            }, 500); // 500ms debounce delay
+        }
+
+        async function initializeWebcam() {
+            // Prevent multiple simultaneous initializations
+            if (isInitializingWebcam) {
+                console.log('Webcam initialization already in progress, skipping...');
+                return;
+            }
+            
+            console.log('Initializing webcam...');
+            isInitializingWebcam = true;
+
+            try {
+                if (window.electron) {
+                    const prefs = await window.electron.loadPreferences();
+                    if (prefs && prefs.selectedWebcam) {
+                        await startWebcam(prefs.selectedWebcam);
+                    } else {
+                        const devices = await navigator.mediaDevices.enumerateDevices();
+                        const webcams = devices.filter(device => device.kind === 'videoinput');
+                        if (webcams.length > 0) {
+                            await startWebcam(webcams[0].deviceId);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error initializing webcam:', error);
+                recordButton.disabled = true;
+            } finally {
+                isInitializingWebcam = false;
+            }
+        }
+
+        async function startWebcam(deviceId) {
+            if (!isWebcamEnabled) return;
+            
+            // Stop any existing stream
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+                const videoElement = document.getElementById('videoElement');
+                videoElement.srcObject = null;
+            }
+
+            try {
+                const constraints = {
+                    video: {
+                        deviceId: deviceId ? { exact: deviceId } : undefined
+                    },
+                    audio: false
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                const videoElement = document.getElementById('videoElement');
+                const displayCanvas = document.getElementById('displayCanvas');
+                const displayCtx = displayCanvas.getContext('2d', {
+                    alpha: true,
+                    willReadFrequently: true
+                });
+                const recordCanvas = document.createElement('canvas');
+                const recordCtx = recordCanvas.getContext('2d', {
+                    alpha: true,
+                    willReadFrequently: true
+                });
+                videoElement.srcObject = stream;
+                currentStream = stream;
+                
+                // Set up MediaRecorder with canvas stream
+                recordCanvas.width = displayCanvas.width;
+                recordCanvas.height = displayCanvas.height;
+                const canvasStream = recordCanvas.captureStream(30); // 30 FPS
+                mediaRecorder = new MediaRecorder(canvasStream, {
+                    mimeType: 'video/webm;codecs=vp9',
+                    videoBitsPerSecond: 2500000 // 2.5 Mbps
+                });
+
+                mediaRecorder.ondataavailable = handleDataAvailable;
+                mediaRecorder.onstop = handleStop;
+                mediaRecorder.onerror = (event) => {
+                    console.error('MediaRecorder error:', event.error);
+                    recordingStatus.textContent = 'Recording failed: ' + event.error.message;
+                    recordButton.disabled = false;
+                    recordButton.textContent = 'Record 5s';
+                    isRecording = false;
+                };
+                
+                // Enable record button
+                recordButton.disabled = false;
+
+                // Function to draw video and overlay to both canvases
+                function drawCanvas() {
+                    if (videoElement.videoWidth > 0) {
+                        // Calculate dimensions for 9:16 aspect ratio
+                        const targetAspectRatio = 9/16;
+                        
+                        // Get container dimensions
+                        const container = displayCanvas.parentElement;
+                        const containerWidth = container.clientWidth;
+                        const containerHeight = container.clientHeight;
+                        
+                        // Calculate canvas dimensions to fit container while maintaining 9:16
+                        let canvasHeight = containerHeight;
+                        let canvasWidth = canvasHeight * targetAspectRatio;
+                        
+                        // If canvas width is too wide, scale based on width instead
+                        if (canvasWidth > containerWidth) {
+                            canvasWidth = containerWidth;
+                            canvasHeight = canvasWidth / targetAspectRatio;
+                        }
+                        
+                        // Set canvas sizes
+                        displayCanvas.width = canvasWidth;
+                        displayCanvas.height = canvasHeight;
+                        recordCanvas.width = canvasWidth;
+                        recordCanvas.height = canvasHeight;
+
+                        // Calculate source dimensions (cropping from original video)
+                        const sourceHeight = videoElement.videoHeight;
+                        const sourceWidth = sourceHeight * targetAspectRatio;
+                        const cropX = (videoElement.videoWidth - sourceWidth) / 2;
+
+                        // Draw to both canvases
+                        [displayCtx, recordCtx].forEach(ctx => {
+                            if (!ctx) return;
+
+                            // Clear the canvas
+                            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+                            // Save the initial context state
+                            ctx.save();
+
+                            // Draw webcam
+                            ctx.drawImage(
+                                videoElement,
+                                cropX, 0, sourceWidth, sourceHeight,
+                                0, 0, canvasWidth, canvasHeight
+                            );
+
+                            // Apply color tint based on active overlay
+                            const activeTint = isOverlay1Active ? currentColorTint1 : currentColorTint2;
+                            ctx.fillStyle = activeTint;
+                            ctx.globalCompositeOperation = 'multiply';
+                            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+                            ctx.globalCompositeOperation = 'source-over';
+
+                            // Draw video overlays
+                            if (isOverlay1Active) {
+                                if (overlayVideo1.src && !overlayVideo1.paused && overlayVideo1.readyState >= 2) {
+                                    const videoAspect = overlayVideo1.videoWidth / overlayVideo1.videoHeight;
+                                    let drawWidth = canvasWidth;
+                                    let drawHeight = canvasHeight;
+                                    let drawX = 0;
+                                    let drawY = 0;
+
+                                    if (videoAspect > targetAspectRatio) {
+                                        drawHeight = canvasHeight;
+                                        drawWidth = drawHeight * videoAspect;
+                                        drawX = (canvasWidth - drawWidth) / 2;
+                                    } else {
+                                        drawWidth = canvasWidth;
+                                        drawHeight = drawWidth / videoAspect;
+                                        drawY = (canvasHeight - drawHeight) / 2;
+                                    }
+
+                                    ctx.drawImage(overlayVideo1, drawX, drawY, drawWidth, drawHeight);
+                                }
+                            } else {
+                                if (overlayVideo2.src && !overlayVideo2.paused && overlayVideo2.readyState >= 2) {
+                                    const videoAspect = overlayVideo2.videoWidth / overlayVideo2.videoHeight;
+                                    let drawWidth = canvasWidth;
+                                    let drawHeight = canvasHeight;
+                                    let drawX = 0;
+                                    let drawY = 0;
+
+                                    if (videoAspect > targetAspectRatio) {
+                                        drawHeight = canvasHeight;
+                                        drawWidth = drawHeight * videoAspect;
+                                        drawX = (canvasWidth - drawWidth) / 2;
+                                    } else {
+                                        drawWidth = canvasWidth;
+                                        drawHeight = drawWidth / videoAspect;
+                                        drawY = (canvasHeight - drawHeight) / 2;
+                                    }
+
+                                    ctx.drawImage(overlayVideo2, drawX, drawY, drawWidth, drawHeight);
+                                }
+                            }
+
+                            // Restore the context state before drawing text
+                            ctx.restore();
+
+                            // Draw text overlays if this is the display context
+                            if (ctx === displayCtx) {
+                                drawTextOverlays(ctx, canvasWidth, canvasHeight);
+                            }
+                        });
+
+                        // Handle recording canvas if recording
+                        if (isRecording) {
+                            // Copy the display canvas to the recording canvas
+                            recordCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+                            recordCtx.drawImage(displayCanvas, 0, 0);
+                        }
+                    }
+                    
+                    // Always request next frame
+                    requestAnimationFrame(drawCanvas);
+                }
+
+                // Start the canvas drawing loop immediately
+                drawCanvas();
+
+            } catch (error) {
+                console.error('Error accessing webcam:', error);
+                const errorMessage = document.createElement('p');
+                errorMessage.className = 'error-message';
+                errorMessage.textContent = 'Error accessing webcam: ' + error.message;
+                document.body.appendChild(errorMessage);
+                recordButton.disabled = true;
+            }
+        }
+
+        function handleDataAvailable(event) {
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        }
+
+        function handleStop() {
+            const blob = new Blob(recordedChunks, {
+                type: 'video/webm;codecs=vp9'
+            });
+            recordedChunks = [];
+            
+            // Get selected player ID
+            const selectedPlayerId = playerSelect.value || 'unknown';
+            
+            // Create download link
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${selectedPlayerId}.webm`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            // Reset UI
+            recordButton.disabled = false;
+            recordButton.textContent = 'Record 5s';
+            recordingStatus.textContent = 'Recording saved!';
+            setTimeout(() => {
+                recordingStatus.textContent = '';
+            }, 3000);
+        }
+
+        // Initialize when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            if (isWebcamEnabled) {
+                debouncedInitializeWebcam();
+            }
+
+            // Initialize player manager
+            const playerManager = new PlayerManager(playerSelect);
+            
+            // Handle player selection
+            playerManager.onPlayerSelected((playerId) => {
+                console.log('Selected player ID:', playerId);
+            });
+
+            // Clean up player manager when window is closed
+            window.addEventListener('beforeunload', () => {
+                playerManager.cleanup();
+            });
+
+            // Add overlay toggle button handler
+            overlayToggleButton.addEventListener('click', () => {
+                isOverlay1Active = !isOverlay1Active;
+                overlayToggleButton.textContent = isOverlay1Active ? 'Overlay 1 & Tint 1 Active' : 'Overlay 2 & Tint 2 Active';
+                overlayToggleButton.style.backgroundColor = isOverlay1Active ? '#2196F3' : '#9C27B0';
+                
+                // Update player list based on overlay state
+                playerManager.setOverlayState(isOverlay1Active);
+                
+                // Update overlay 1
+                if (overlayVideo1.src) {
+                    overlayVideo1.style.display = isOverlay1Active ? 'block' : 'none';
+                    overlayVideo1.style.visibility = isOverlay1Active ? 'visible' : 'hidden';
+                    overlayVideo1.style.opacity = isOverlay1Active ? '1' : '0';
+                    if (isOverlay1Active) {
+                        overlayVideo1.play().catch(err => console.error('Error playing overlay 1:', err));
+                    } else {
+                        overlayVideo1.pause();
+                    }
+                }
+
+                // Update overlay 2
+                if (overlayVideo2.src) {
+                    overlayVideo2.style.display = !isOverlay1Active ? 'block' : 'none';
+                    overlayVideo2.style.visibility = !isOverlay1Active ? 'visible' : 'hidden';
+                    overlayVideo2.style.opacity = !isOverlay1Active ? '1' : '0';
+                    if (!isOverlay1Active) {
+                        overlayVideo2.play().catch(err => console.error('Error playing overlay 2:', err));
+                    } else {
+                        overlayVideo2.pause();
+                    }
+                }
+            });
+        });
+
+        // Add webcam state change handler
+        if (window.electron) {
+            window.electron.onWebcamStateChange((enabled) => {
+                isWebcamEnabled = enabled;
+                if (!enabled && currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                    currentStream = null;
+                    const videoElement = document.getElementById('videoElement');
+                    videoElement.srcObject = null;
+                } else if (enabled && !currentStream) {
+                    debouncedInitializeWebcam();
+                }
+            });
+
+            // Add webcam change handler
+            window.electron.onWebcamChange((deviceId) => {
+                if (deviceId && isWebcamEnabled) {
+                    // Use startWebcam directly for device changes to ensure immediate response
+                    startWebcam(deviceId);
+                }
+            });
+        }
+
+        // Add video overlay change handler
+        window.electron.onVideoOverlayChange((data) => {
+            // Handle overlay 1
+            if (data.overlay1) {
+                overlayVideo1.src = data.overlay1;
+                overlayVideo1.style.display = isOverlay1Active ? 'block' : 'none';
+                overlayVideo1.style.visibility = isOverlay1Active ? 'visible' : 'hidden';
+                overlayVideo1.style.opacity = isOverlay1Active ? '1' : '0';
+                if (isOverlay1Active) {
+                    overlayVideo1.play().catch(err => console.error('Error playing overlay 1:', err));
+                }
+            } else {
+                overlayVideo1.src = '';
+                overlayVideo1.style.display = 'none';
+                overlayVideo1.style.visibility = 'hidden';
+                overlayVideo1.style.opacity = '0';
+            }
+
+            // Handle overlay 2
+            if (data.overlay2) {
+                overlayVideo2.src = data.overlay2;
+                overlayVideo2.style.display = !isOverlay1Active ? 'block' : 'none';
+                overlayVideo2.style.visibility = !isOverlay1Active ? 'visible' : 'hidden';
+                overlayVideo2.style.opacity = !isOverlay1Active ? '1' : '0';
+                if (!isOverlay1Active) {
+                    overlayVideo2.play().catch(err => console.error('Error playing overlay 2:', err));
+                }
+            } else {
+                overlayVideo2.src = '';
+                overlayVideo2.style.display = 'none';
+                overlayVideo2.style.visibility = 'hidden';
+                overlayVideo2.style.opacity = '0';
+            }
+        });
+
+        function drawTextOverlays(ctx, canvasWidth, canvasHeight) {
+            // Create a temporary canvas for text
+            const textCanvas = document.createElement('canvas');
+            textCanvas.width = canvasWidth;
+            textCanvas.height = canvasHeight;
+            const textCtx = textCanvas.getContext('2d', { alpha: true });
+
+            // Clear the temporary canvas with full transparency
+            textCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            // Calculate base font size from canvas height
+            const baseFontSize = Math.max(24, Math.floor(canvasHeight * 0.04));
+
+            // Setup text style with maximum visibility
+            textCtx.fillStyle = 'white';
+            textCtx.shadowColor = 'rgba(0, 0, 0, 1)';
+            textCtx.shadowBlur = Math.max(8, baseFontSize * 0.3);
+            textCtx.shadowOffsetX = Math.max(2, baseFontSize * 0.1);
+            textCtx.shadowOffsetY = Math.max(2, baseFontSize * 0.1);
+            textCtx.strokeStyle = 'black';
+            textCtx.lineWidth = Math.max(3, baseFontSize * 0.1);
+
+            // Get allegiance and transform if needed
+            let allegiance = playerSelect.options[playerSelect.selectedIndex]?.dataset.allegiance || '';
+            if (allegiance.toLowerCase() === 'resistance') {
+                allegiance = '72|65|73|69|73|74|61|6E|63|65|0A';
+            }
+
+            // Draw each text field
+            const textFields = [
+                { value: playerSelect.options[playerSelect.selectedIndex]?.text || '' },
+                { value: allegiance },
+                { value: field3Input.value }
+            ];
+
+            textFields.forEach((field, index) => {
+                if (field.value) {
+                    const settings = textFieldSettings[index];
+                    if (!settings) return;
+
+                    const fontSize = Math.floor(canvasHeight * (settings.size / 100));
+                    const x = canvasWidth * (settings.x / 100);
+                    const y = canvasHeight * (settings.y / 100);
+
+                    textCtx.font = `bold ${fontSize}px ${currentFontFamily}`;
+                    textCtx.strokeText(field.value, x, y);
+                    textCtx.fillText(field.value, x, y);
+                }
+            });
+
+            // Draw the text canvas on top of everything with source-over
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.drawImage(textCanvas, 0, 0);
+        }
+
+        // Add record button click handler
+        recordButton.addEventListener('click', () => {
+            if (isRecording) return;
+            
+            isRecording = true;
+            recordButton.disabled = true;
+            recordButton.textContent = 'Recording...';
+            recordingStatus.textContent = 'Recording in progress...';
+            
+            // Start recording
+            mediaRecorder.start();
+            
+            // Stop after 5 seconds
+            setTimeout(() => {
+                if (mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                    isRecording = false;
+                }
+            }, 5000);
+        });
+    </script>
+</body>
+</html> 
